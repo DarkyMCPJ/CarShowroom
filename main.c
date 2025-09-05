@@ -38,12 +38,10 @@ int main() {
             case 3: searchCar(); break;
             case 4: updateCar(); break;
             case 5: deleteCar(); break;
-            case 6: printf("Exiting...\n"); break;
+            case 6: printf("Exiting...\n"); return 0;
             default: printf("Invalid choice!\n");
         }
-            return 0;
     } 
-    
 }
 
 
