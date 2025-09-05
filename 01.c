@@ -41,10 +41,9 @@ int main() {
             case 6: printf("Exiting...\n"); break;
             default: printf("Invalid choice!\n");
         }
+            return 0;
     } 
-
-    return 0;
-
+    
 }
 
 
