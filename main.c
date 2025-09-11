@@ -3,7 +3,7 @@
 #define FILENAME "cars.csv"
 #define MAX_MODEL 50
 
-// Car structure
+// Car structure for header idk
 typedef struct {
     char model[MAX_MODEL];
     int year;
@@ -11,7 +11,7 @@ typedef struct {
     char availability[10];
 } Car;
 
-// Function declarations
+// Function and stuff
 void addCar();
 void displayCars();
 void searchCar();
@@ -30,7 +30,7 @@ int main() {
         printf("6. Exit\n");
         printf("Choose an option: ");
         scanf("%d", &choice);
-        getchar(); // consume newline
+        getchar(); // for cleaner line
 
         switch (choice) {
             case 1: addCar(); break;
