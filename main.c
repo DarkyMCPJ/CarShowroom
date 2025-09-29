@@ -19,6 +19,7 @@ void updateCar();
 void deleteCar();
 void unitTest();
 void E2ETest();
+void initFile();
 
 int main() {
 initFile();
