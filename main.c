@@ -67,6 +67,40 @@ void deleteCar() {
 }
 
 void unitTest() {
-
     
+    int choice;
+    for (;;) {
+        printf("\n===== Unit Test Menu =====\n");
+        printf("1. Test Add Car\n");
+        printf("2. Test Display Cars\n");
+        printf("3. Test Search Car\n");
+        printf("4. Test Update Car\n");
+        printf("5. Test Delete Car\n");
+        printf("6. Back to Main Menu\n");
+        printf("Choose an option: ");
+        scanf("%d", &choice);
+        getchar();
+
+        switch (choice) {
+            case 1: 
+                printf("\n--- Running Add Car Test ---\n");
+                break;
+            case 2: 
+                printf("\n--- Running Display Cars Test ---\n");
+                break;
+            case 3: 
+                printf("\n--- Running Search Car Test ---\n");
+                break;
+            case 4: 
+                printf("\n--- Running Update Car Test ---\n");
+                break;
+            case 5: 
+                printf("\n--- Running Delete Car Test ---\n");
+                break;
+            case 6: 
+                return;
+            default: 
+                printf("Invalid choice!\n");
+        }
+    }
 }
