@@ -3,7 +3,7 @@
 #define FILENAME "cars.csv"
 #define MAX_MODEL 50
 
-// Car structure for header idk
+// Car structure
 typedef struct {
     char model[MAX_MODEL];
     int year;
@@ -11,7 +11,7 @@ typedef struct {
     char availability[10];
 } Car;
 
-// Function and stuff
+// Function declarations
 void addCar();
 void displayCars();
 void searchCar();
@@ -30,7 +30,7 @@ int main() {
         printf("6. Exit\n");
         printf("Choose an option: ");
         scanf("%d", &choice);
-        getchar(); // for cleaner line
+        getchar(); // consume newline
 
         switch (choice) {
             case 1: addCar(); break;
@@ -38,34 +38,35 @@ int main() {
             case 3: searchCar(); break;
             case 4: updateCar(); break;
             case 5: deleteCar(); break;
-            case 6: printf("Exiting...\n"); return 0;
+            case 6: unitTest(); break; 
+            case 7: printf("Exiting...\n"); return 0;
             default: printf("Invalid choice!\n");
         }
     } 
 }
 
 
-// Add car to CSV
 void addCar() {
 
 }
 
-// Display all cars
 void displayCars() {
 
 }
 
-// Search car
 void searchCar() {
 
 }
 
-// Update car
 void updateCar() {
 
 }
 
-// Delete car
 void deleteCar() {
 
+}
+
+void unitTest() {
+
+    
 }
