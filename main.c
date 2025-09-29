@@ -17,9 +17,11 @@ void displayCars();
 void searchCar();
 void updateCar();
 void deleteCar();
+void unitTest();
+void E2ETest();
 
 int main() {
-
+initFile();
     for(int choice;;) {
         printf("\n===== Car Management System =====\n");
         printf("1. Add Car\n");
@@ -27,10 +29,12 @@ int main() {
         printf("3. Search Car (by Model or Year)\n");
         printf("4. Update Car\n");
         printf("5. Delete Car\n");
-        printf("6. Exit\n");
+        printf("6. Unit Test\n");
+        printf("7. E2E Test\n");
+        printf("8. Exit\n");
         printf("Choose an option: ");
         scanf("%d", &choice);
-        getchar(); // consume newline
+        getchar(); 
 
         switch (choice) {
             case 1: addCar(); break;
@@ -39,7 +43,8 @@ int main() {
             case 4: updateCar(); break;
             case 5: deleteCar(); break;
             case 6: unitTest(); break; 
-            case 7: printf("Exiting...\n"); return 0;
+            case 7: E2ETest(); break;
+            case 8: printf("Exiting...\n"); return 0;
             default: printf("Invalid choice!\n");
         }
     } 
@@ -103,4 +108,8 @@ void unitTest() {
                 printf("Invalid choice!\n");
         }
     }
+}
+
+void E2ETest(){
+
 }
