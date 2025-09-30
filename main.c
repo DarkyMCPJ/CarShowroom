@@ -51,6 +51,18 @@ initFile();
     } 
 }
 
+void initFile() {
+    FILE *fp = fopen(FILENAME, "r");
+    if (!fp) {
+        fp = fopen(FILENAME, "w");
+        if (fp) {
+            fprintf(fp, "CarModel,Year,Price,Availability\n"); // ✅ CSV header only
+            fclose(fp);
+        }
+    } else {
+        fclose(fp);
+    }
+}
 
 void addCar() {
 
