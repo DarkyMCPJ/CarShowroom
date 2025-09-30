@@ -1,6 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define FILENAME "cars.csv"
+#define MAX_LINE 256
 #define MAX_MODEL 50
 
 // Car structure
