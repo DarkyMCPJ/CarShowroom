@@ -135,7 +135,7 @@ void displayCars(const char *filename) {
     char line[MAX_LINE];
     int first = 1;
 
-    // Increased width for "Price" from 10 to 13
+
     printf("\n%-20s %-6s %-13s %-12s\n", "Car Model", "Year", "Price", "Availability");
     printf("-----------------------------------------------------------------\n");
 
@@ -147,7 +147,7 @@ void displayCars(const char *filename) {
         Car c;
         sscanf(line, "%[^,],%d,%f,%[^\n]", c.model, &c.year, &c.price, c.availability);
         
-        // Increased width for the price data from 10 to 13
+
         printf("%-20s %-6d %-13.2f %-12s\n",
                c.model, c.year, c.price, c.availability);
     }
@@ -188,12 +188,17 @@ void searchCarInteractive(const char *filename) {
     if (mModel + mYear == 0) {
         printf("No cars found for '%s'.\n", keyword);
     } else {
-        printf("\n%-25s %-6s %-10s %-12s\n", "Car Model", "Year", "Price", "Availability");
-        printf("-----------------------------------------------------------------\n");
+
+        printf("\n%-25s %-6s %-13s %-12s\n", "Car Model", "Year", "Price", "Availability");
+        printf("---------------------------------------------------------------------\n");
+
         for (int i = 0; i < mModel; ++i)
-            printf("%-25s %-6d %-10.2f %-12s\n", modelMatches[i].model, modelMatches[i].year, modelMatches[i].price, modelMatches[i].availability);
+
+            printf("%-25s %-6d %-13.2f %-12s\n", modelMatches[i].model, modelMatches[i].year, modelMatches[i].price, modelMatches[i].availability);
+
         for (int i = 0; i < mYear; ++i)
-            printf("%-25s %-6d %-10.2f %-12s\n", yearMatches[i].model, yearMatches[i].year, yearMatches[i].price, yearMatches[i].availability);
+
+            printf("%-25s %-6d %-13.2f %-12s\n", yearMatches[i].model, yearMatches[i].year, yearMatches[i].price, yearMatches[i].availability);
     }
     free(cars);
     free(modelMatches);
