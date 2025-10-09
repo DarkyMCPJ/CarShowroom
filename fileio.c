@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "car.h"
 
 void copyFile(const char *src, const char *dest) {
@@ -19,6 +20,7 @@ void copyFile(const char *src, const char *dest) {
     fclose(fd);
 }
 
+
 void initFileIfMissing(const char *filename) {
     FILE *fp = fopen(filename, "r");
     if (!fp) {
@@ -32,28 +34,68 @@ void initFileIfMissing(const char *filename) {
     }
 }
 
+static int is_line_empty(const char *s) {
+    while (*s != '\0') {
+        if (!isspace((unsigned char)*s))
+            return 0; 
+        s++;
+    }
+    return 1; 
+}
+
 int loadAllCars(const char *filename, Car **cars) {
     FILE *fp = fopen(filename, "r");
-    if (!fp) return 0;
+    if (!fp) {
+        *cars = NULL;
+        return 0; 
+    }
 
     char line[MAX_LINE];
-    int count = 0, first = 1;
+    int count = 0;
     *cars = NULL;
 
+
+    if (fgets(line, sizeof(line), fp) == NULL) {
+        fclose(fp);
+        return 0; 
+    }
+
     while (fgets(line, sizeof(line), fp)) {
-        if (first) {
-            first = 0;
-            continue;
+
+        if (is_line_empty(line)) {
+            continue; 
         }
-        *cars = realloc(*cars, sizeof(Car) * (count + 1));
-        sscanf(line, "%[^,],%d,%f,%[^\n]",
+
+        Car* temp = realloc(*cars, sizeof(Car) * (count + 1));
+        if (temp == NULL) {
+            perror("Failed to reallocate memory for cars");
+            free(*cars);
+            fclose(fp);
+            return -1; 
+        }
+        *cars = temp;
+        
+        int items_scanned = sscanf(line, "%49[^,],%d,%f,%9[^\n]",
                (*cars)[count].model, &(*cars)[count].year,
                &(*cars)[count].price, (*cars)[count].availability);
-        count++;
+
+        if (items_scanned >= 4) {
+            count++; 
+        } else {
+            printf("Warning: Skipped corrupted or malformed line: %s", line);
+        }
     }
     fclose(fp);
+    
+
+    if (count == 0) {
+        free(*cars);
+        *cars = NULL;
+    }
+    
     return count;
 }
+
 
 void saveAllCars(const char *filename, Car *cars, int count) {
     FILE *fp = fopen(filename, "w");
