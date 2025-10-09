@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
+#include "memory_tracker.h" 
 
 #include "car.h"
 #include "fileio.h"
@@ -116,6 +117,8 @@ void runUnitTests(void) {
     
     printf(CYAN "\n--- All Unit Tests Passed! --- \n" RESET);
     printf("--------------------------------\n");
+
+    report_memory_leaks();
 }
 
 // END-TO-END TEST
@@ -169,4 +172,7 @@ void runE2ETests(void) {
     if (tests_passed == tests_total) printf(GREEN "ALL %d E2E TESTS PASSED!\n" RESET, tests_total);
     else printf(RED "%d / %d E2E TESTS PASSED\n" RESET, tests_passed, tests_total);
     printf("------------------------\n");
+
+    report_memory_leaks();
 }
+
