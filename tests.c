@@ -4,6 +4,8 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
+#include <termios.h> 
+#include <unistd.h>
 
 #include "car.h"
 #include "fileio.h"
@@ -26,6 +28,8 @@ void test_load_from_nonexistent_file();
 // Globals & Helpers for E2E Test Assertions
 static int tests_passed;
 static int tests_total;
+
+char get_single_char(void);
 
 void assert_equal_int(int expected, int actual, const char* message) {
     tests_total++;
@@ -84,9 +88,13 @@ void runTestArena() {
         printf("-----------------------\n");
         printf("Your choice: ");
 
-        char buf[16];
-        if (!fgets(buf, sizeof(buf), stdin)) break;
-        choice = atoi(buf);
+        // =======================================================
+        // NEW INPUT METHOD
+        // =======================================================
+        char c = get_single_char();
+        printf("%c\n", c); // Echo the choice for user feedback
+        choice = c - '0';
+        // =======================================================
 
         switch (choice) {
             case 1: addCarInteractive(arena_file); break;
@@ -102,7 +110,8 @@ void runTestArena() {
                 printf(RED "\nInvalid choice. Please try again.\n" RESET);
         }
         printf("\nPress Enter to continue...");
-        getchar();
+        int key;
+        while ((key = getchar()) != '\n' && key != EOF);
     }
 }
 
