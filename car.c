@@ -19,31 +19,30 @@ void str_to_lower(char *s) {
 }
 
 void addCarInteractive(const char *filename) {
+    initFileIfMissing(filename);
+
+    Car *cars = NULL;
+    int count = loadAllCars(filename, &cars);
+
     FILE *fp = fopen(filename, "a");
-    if (!fp) {
-        perror("File open failed");
-        return;
-    }
+    if (!fp) { perror("File open failed"); free(cars); return; }
 
     Car c;
+    char buf[64];
 
     printf("Enter Car Model (or press Enter to cancel): ");
-    if (!fgets(c.model, MAX_MODEL, stdin)) {
-        fclose(fp);
-        return;
-    }
+    if (!fgets(c.model, MAX_MODEL, stdin)) { fclose(fp); free(cars); return; }
     trim_newline(c.model);
     if (strlen(c.model) == 0) {
         printf("❎ Cancelled add operation.\n");
         fclose(fp);
+        free(cars);
         return;
     }
 
-    char buf[32];
-
-    while (1) {
+    /* --- Year input using for loop --- */
+    for (;;) {
         printf("Enter Year (1886-2025): ");
-        char buf[16];
         fgets(buf, sizeof(buf), stdin);
         int year = atoi(buf);
         if (year >= 1886 && year <= 2025) {
@@ -53,35 +52,72 @@ void addCarInteractive(const char *filename) {
         printf("❌ Invalid year. Must be between 1886 and 2025.\n");
     }
 
-    while (1) {
-        printf("Enter Price: ");
-        if (!fgets(buf, sizeof(buf), stdin)) {
-            fclose(fp);
-            return;
+    /* --- Check for duplicates --- */
+    int duplicateIndex = -1;
+    for (int i = 0; i < count; i++) {
+        if (strcasecmp(cars[i].model, c.model) == 0 && cars[i].year == c.year) {
+            duplicateIndex = i;
+            break;
         }
+    }
+
+    if (duplicateIndex != -1) {
+        printf("⚠️ Car '%s' (%d) already exists.\n", c.model, c.year);
+        printf("Do you want to update it instead? (y/n): ");
+        fgets(buf, sizeof(buf), stdin);
+        if (tolower(buf[0]) == 'y') {
+            printf("Enter new Price (current %.2f): ", cars[duplicateIndex].price);
+            fgets(buf, sizeof(buf), stdin); trim_newline(buf);
+            if (strlen(buf)) cars[duplicateIndex].price = atof(buf);
+
+            for (;;) {
+                printf("Enter new Availability (Yes/No, current %s): ", cars[duplicateIndex].availability);
+                fgets(buf, sizeof(buf), stdin); trim_newline(buf);
+                if (strlen(buf) == 0) break;
+                if (strcasecmp(buf, "Yes") == 0 || strcasecmp(buf, "No") == 0) {
+                    strncpy(cars[duplicateIndex].availability, buf, sizeof(cars[duplicateIndex].availability));
+                    break;
+                }
+                printf("❌ Invalid availability. Please enter 'Yes' or 'No'.\n");
+            }
+
+            saveAllCars(filename, cars, count);
+            printf("✅ Existing car updated successfully!\n");
+        } else {
+            printf("❎ Add operation cancelled (duplicate found).\n");
+        }
+
+        fclose(fp);
+        free(cars);
+        return;
+    }
+
+    /* --- Price input using for loop --- */
+    for (;;) {
+        printf("Enter Price: ");
+        fgets(buf, sizeof(buf), stdin);
         trim_newline(buf);
         float p = atof(buf);
         if (p >= 0) {
             c.price = p;
             break;
-        } else {
-            printf("❌ Invalid price. Try again.\n");
         }
+        printf("❌ Invalid price. Try again.\n");
     }
 
-    while (1) {
+    /* --- Availability input using for loop --- */
+    for (;;) {
         printf("Enter Availability (Yes/No): ");
-        if (!fgets(c.availability, sizeof(c.availability), stdin)) {
-            fclose(fp);
-            return;
-        }
+        fgets(c.availability, sizeof(c.availability), stdin);
         trim_newline(c.availability);
-        if (strcasecmp(c.availability, "Yes") == 0 || strcasecmp(c.availability, "No") == 0) break;
+        if (strcasecmp(c.availability, "Yes") == 0 || strcasecmp(c.availability, "No") == 0)
+            break;
         printf("❌ Invalid availability. Please enter 'Yes' or 'No'.\n");
     }
 
     fprintf(fp, "%s,%d,%.2f,%s\n", c.model, c.year, c.price, c.availability);
     fclose(fp);
+    free(cars);
 
     printf("✅ Car added successfully!\n");
 }
