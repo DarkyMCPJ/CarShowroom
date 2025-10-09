@@ -325,6 +325,8 @@ void updateCarInteractive(const char *filename) {
     free(cars);
 }
 
+// In car.c
+
 void deleteCarInteractive(const char *filename) {
     char keyword[MAX_MODEL];
     printf("Enter keyword of Car Model to delete (or press Enter to cancel): ");
@@ -332,15 +334,28 @@ void deleteCarInteractive(const char *filename) {
     trim_newline(keyword);
     if (strlen(keyword) == 0) {
         printf("❎ Cancelled delete operation.\n");
-        return;
+        return; // Ensure we exit here
     }
+
     char keyword_lower[MAX_MODEL];
     strncpy(keyword_lower, keyword, MAX_MODEL);
     str_to_lower(keyword_lower);
+
     Car *cars = NULL;
     int n = loadAllCars(filename, &cars);
-    if (n < 0) { perror("File error"); return; }
+    if (n <= 0) { // Also handle the case where the file is empty or fails to load
+        printf("No cars to delete.\n");
+        free(cars); // cars might be NULL, but free(NULL) is safe
+        return;
+    }
+
     int *matches = malloc(sizeof(int) * n);
+    if (matches == NULL) { // Always check if malloc succeeded
+        perror("Failed to allocate memory for matches");
+        free(cars);
+        return;
+    }
+
     int mcount = 0;
     for (int i = 0; i < n; ++i) {
         char model_lower[MAX_MODEL];
@@ -352,7 +367,7 @@ void deleteCarInteractive(const char *filename) {
     }
 
     if (mcount == 0) {
-        printf("No matches found for '%s'.\n");
+        printf("No matches found for '%s'.\n", keyword);
         free(cars);
         free(matches);
         return;
@@ -364,13 +379,9 @@ void deleteCarInteractive(const char *filename) {
         printf("Delete this car? (y/n): ");
         char confirm[8];
         fgets(confirm, sizeof(confirm), stdin);
-        if (tolower(confirm[0]) != 'y') {
-            printf("❎ Cancelled delete.\n");
-            free(cars);
-            free(matches);
-            return;
+        if (tolower(confirm[0]) == 'y') {
+            chosenIdx = matches[0];
         }
-        chosenIdx = matches[0];
     } else {
         printf("Multiple matches:\n");
         for (int i = 0; i < mcount; ++i) {
@@ -381,27 +392,29 @@ void deleteCarInteractive(const char *filename) {
         char buf[16];
         fgets(buf, sizeof(buf), stdin);
         int sel = atoi(buf);
-        if (sel == 0) {
-            printf("❎ Cancelled delete operation.\n");
-            free(cars);
-            free(matches);
-            return;
+
+        if (sel > 0 && sel <= mcount) {
+            chosenIdx = matches[sel - 1];
         }
-        if (sel < 1 || sel > mcount) {
-            printf("❌ Invalid selection.\n");
-            free(cars);
-            free(matches);
-            return;
-        }
-        chosenIdx = matches[sel - 1];
+    }
+
+    // FINAL SAFETY CHECK: If no car was chosen for any reason, cancel and exit.
+    if (chosenIdx == -1) {
+        printf("❎ Delete operation cancelled.\n");
+        free(cars);
+        free(matches);
+        return;
     }
 
     char deletedModel[MAX_MODEL];
     strcpy(deletedModel, cars[chosenIdx].model);
+
     for (int i = chosenIdx; i < n - 1; ++i)
         cars[i] = cars[i + 1];
+
     saveAllCars(filename, cars, n - 1);
     printf("✅ Car deleted: %s\n", deletedModel);
+
     free(cars);
     free(matches);
 }
