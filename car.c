@@ -20,27 +20,20 @@ void str_to_lower(char *s) {
 
 void addCarInteractive(const char *filename) {
     initFileIfMissing(filename);
-
     Car *cars = NULL;
     int count = loadAllCars(filename, &cars);
-
-    FILE *fp = fopen(filename, "a");
-    if (!fp) { perror("File open failed"); free(cars); return; }
-
     Car c;
     char buf[64];
 
     printf("Enter Car Model (or press Enter to cancel): ");
-    if (!fgets(c.model, MAX_MODEL, stdin)) { fclose(fp); free(cars); return; }
+    if (!fgets(c.model, MAX_MODEL, stdin)) { free(cars); return; }
     trim_newline(c.model);
     if (strlen(c.model) == 0) {
         printf("❎ Cancelled add operation.\n");
-        fclose(fp);
         free(cars);
         return;
     }
 
-    /* --- Year input using for loop --- */
     for (;;) {
         printf("Enter Year (1886-2025): ");
         fgets(buf, sizeof(buf), stdin);
@@ -52,7 +45,6 @@ void addCarInteractive(const char *filename) {
         printf("❌ Invalid year. Must be between 1886 and 2025.\n");
     }
 
-    /* --- Check for duplicates --- */
     int duplicateIndex = -1;
     for (int i = 0; i < count; i++) {
         if (strcasecmp(cars[i].model, c.model) == 0 && cars[i].year == c.year) {
@@ -69,7 +61,6 @@ void addCarInteractive(const char *filename) {
             printf("Enter new Price (current %.2f): ", cars[duplicateIndex].price);
             fgets(buf, sizeof(buf), stdin); trim_newline(buf);
             if (strlen(buf)) cars[duplicateIndex].price = atof(buf);
-
             for (;;) {
                 printf("Enter new Availability (Yes/No, current %s): ", cars[duplicateIndex].availability);
                 fgets(buf, sizeof(buf), stdin); trim_newline(buf);
@@ -80,60 +71,67 @@ void addCarInteractive(const char *filename) {
                 }
                 printf("❌ Invalid availability. Please enter 'Yes' or 'No'.\n");
             }
-
             saveAllCars(filename, cars, count);
             printf("✅ Existing car updated successfully!\n");
         } else {
             printf("❎ Add operation cancelled (duplicate found).\n");
         }
-
-        fclose(fp);
         free(cars);
         return;
     }
 
-    /* --- Price input using for loop --- */
+    int availability_is_set = 0;
     for (;;) {
         printf("Enter Price: ");
         fgets(buf, sizeof(buf), stdin);
         trim_newline(buf);
         float p = atof(buf);
-        if (p >= 0) {
+        if (p > 0) {
             c.price = p;
             break;
+        } else if (p == 0) {
+            printf("⚠️ Are you sure? Setting the price to 0 will automatically set availability to \"No\". (y/n): ");
+            fgets(buf, sizeof(buf), stdin);
+            if (tolower(buf[0]) == 'y') {
+                c.price = 0.0;
+                strcpy(c.availability, "No");
+                availability_is_set = 1;
+                break;
+            } else {
+                printf("Price entry cancelled. Please enter a different price.\n");
+                continue;
+            }
+        } else {
+            printf("❌ Invalid price. Try again.\n");
         }
-        printf("❌ Invalid price. Try again.\n");
     }
 
-    /* --- Availability input using for loop --- */
-    for (;;) {
-        printf("Enter Availability (Yes/No): ");
-        fgets(c.availability, sizeof(c.availability), stdin);
-        trim_newline(c.availability);
-        if (strcasecmp(c.availability, "Yes") == 0 || strcasecmp(c.availability, "No") == 0)
-            break;
-        printf("❌ Invalid availability. Please enter 'Yes' or 'No'.\n");
+    if (!availability_is_set) {
+        for (;;) {
+            printf("Enter Availability (Yes/No): ");
+            fgets(c.availability, sizeof(c.availability), stdin);
+            trim_newline(c.availability);
+            if (strcasecmp(c.availability, "Yes") == 0 || strcasecmp(c.availability, "No") == 0)
+                break;
+            printf("❌ Invalid availability. Please enter 'Yes' or 'No'.\n");
+        }
     }
 
+    FILE *fp = fopen(filename, "a");
+    if (!fp) { perror("File open failed"); free(cars); return; }
     fprintf(fp, "%s,%d,%.2f,%s\n", c.model, c.year, c.price, c.availability);
     fclose(fp);
     free(cars);
-
     printf("✅ Car added successfully!\n");
 }
 
 void displayCars(const char *filename) {
     FILE *fp = fopen(filename, "r");
-    if (!fp) {
-        perror("File open failed");
-        return;
-    }
-
+    if (!fp) { perror("File open failed"); return; }
     char line[MAX_LINE];
     int first = 1;
     printf("\n%-20s %-6s %-10s %-12s\n", "Car Model", "Year", "Price", "Availability");
     printf("---------------------------------------------------------------\n");
-
     while (fgets(line, sizeof(line), fp)) {
         if (first) {
             first = 0;
@@ -141,8 +139,7 @@ void displayCars(const char *filename) {
         }
         Car c;
         sscanf(line, "%[^,],%d,%f,%[^\n]", c.model, &c.year, &c.price, c.availability);
-        printf("%-20s %-6d %-10.2f %-12s\n",
-               c.model, c.year, c.price, c.availability);
+        printf("%-20s %-6d %-10.2f %-12s\n", c.model, c.year, c.price, c.availability);
     }
     fclose(fp);
 }
@@ -156,50 +153,37 @@ void searchCarInteractive(const char *filename) {
         printf("❎ Cancelled search.\n");
         return;
     }
-
     char keyword_lower[MAX_MODEL];
     strncpy(keyword_lower, keyword, MAX_MODEL);
     str_to_lower(keyword_lower);
-
     Car *cars = NULL;
     int n = loadAllCars(filename, &cars);
-    if (n < 0) {
-        perror("File error");
-        return;
-    }
-
+    if (n < 0) { perror("File error"); return; }
     Car *modelMatches = malloc(sizeof(Car) * n);
     Car *yearMatches = malloc(sizeof(Car) * n);
     int mModel = 0, mYear = 0;
-
     for (int i = 0; i < n; ++i) {
         char yearStr[16];
         sprintf(yearStr, "%d", cars[i].year);
-
         char model_lower[MAX_MODEL];
         strncpy(model_lower, cars[i].model, MAX_MODEL);
         str_to_lower(model_lower);
-
         if (strstr(model_lower, keyword_lower)) {
             modelMatches[mModel++] = cars[i];
         } else if (strstr(yearStr, keyword_lower)) {
             yearMatches[mYear++] = cars[i];
         }
     }
-
     if (mModel + mYear == 0) {
         printf("No cars found for '%s'.\n", keyword);
     } else {
         printf("\n%-25s %-6s %-10s %-12s\n", "Car Model", "Year", "Price", "Availability");
         printf("-----------------------------------------------------------------\n");
-
         for (int i = 0; i < mModel; ++i)
             printf("%-25s %-6d %-10.2f %-12s\n", modelMatches[i].model, modelMatches[i].year, modelMatches[i].price, modelMatches[i].availability);
-
         for (int i = 0; i < mYear; ++i)
             printf("%-25s %-6d %-10.2f %-12s\n", yearMatches[i].model, yearMatches[i].year, yearMatches[i].price, yearMatches[i].availability);
     }
-
     free(cars);
     free(modelMatches);
     free(yearMatches);
@@ -214,18 +198,12 @@ void updateCarInteractive(const char *filename) {
         printf("❎ Cancelled update operation.\n");
         return;
     }
-
     char keyword_lower[MAX_MODEL];
     strncpy(keyword_lower, keyword, MAX_MODEL);
     str_to_lower(keyword_lower);
-
     Car *cars = NULL;
     int n = loadAllCars(filename, &cars);
-    if (n < 0) {
-        perror("File error");
-        return;
-    }
-
+    if (n < 0) { perror("File error"); return; }
     int *matches = malloc(sizeof(int) * n);
     int mcount = 0;
     for (int i = 0; i < n; ++i) {
@@ -234,17 +212,16 @@ void updateCarInteractive(const char *filename) {
         char model_lower[MAX_MODEL];
         strncpy(model_lower, cars[i].model, MAX_MODEL);
         str_to_lower(model_lower);
-
         if (strstr(model_lower, keyword_lower) || strstr(yearStr, keyword_lower))
             matches[mcount++] = i;
     }
 
     if (mcount == 0) {
-        printf("No matches found for '%s'.\n");
+        printf("No matches found for '%s'.\n", keyword);
         free(cars);
         free(matches);
         return;
-    }
+    } // <-- THE MISSING BRACE GOES HERE
 
     int chosen = -1;
     if (mcount == 1) {
@@ -286,7 +263,7 @@ void updateCarInteractive(const char *filename) {
 
     printf("\nUpdating: %s\n", cars[chosen].model);
     char buf[128];
-
+    int availability_overridden = 0;
     printf("Enter new model (blank to keep): ");
     fgets(buf, sizeof(buf), stdin);
     trim_newline(buf);
@@ -308,23 +285,42 @@ void updateCarInteractive(const char *filename) {
     printf("Enter new price (blank to keep): ");
     fgets(buf, sizeof(buf), stdin);
     trim_newline(buf);
-    if (strlen(buf)) cars[chosen].price = (float)atof(buf);
-
-    while (1) {
-        printf("Enter new availability (Yes/No, blank to keep): ");
-        fgets(buf, sizeof(buf), stdin);
-        trim_newline(buf);
-        if (strlen(buf) == 0) break;
-        if (strcasecmp(buf, "Yes") == 0 || strcasecmp(buf, "No") == 0) {
-            strncpy(cars[chosen].availability, buf, sizeof(cars[chosen].availability));
-            break;
+    if (strlen(buf)) {
+        float p = atof(buf);
+        if (p > 0) {
+            cars[chosen].price = p;
+        } else if (p == 0) {
+            printf("⚠️ Are you sure? Setting the price to 0 will automatically set availability to \"No\". (y/n): ");
+            fgets(buf, sizeof(buf), stdin);
+            if (tolower(buf[0]) == 'y') {
+                cars[chosen].price = 0.0;
+                strcpy(cars[chosen].availability, "No");
+                availability_overridden = 1;
+                printf("Price set to 0 and availability set to 'No'.\n");
+            } else {
+                printf("Price update cancelled.\n");
+            }
+        } else {
+            printf("❌ Invalid price entered. Price not updated.\n");
         }
-        printf("Invalid availability (please enter 'Yes' or 'No').\n");
+    }
+    
+    if (!availability_overridden) {
+        while (1) {
+            printf("Enter new availability (Yes/No, blank to keep): ");
+            fgets(buf, sizeof(buf), stdin);
+            trim_newline(buf);
+            if (strlen(buf) == 0) break;
+            if (strcasecmp(buf, "Yes") == 0 || strcasecmp(buf, "No") == 0) {
+                strncpy(cars[chosen].availability, buf, sizeof(cars[chosen].availability));
+                break;
+            }
+            printf("Invalid availability (please enter 'Yes' or 'No').\n");
+        }
     }
 
     saveAllCars(filename, cars, n);
     printf("✅ Car updated successfully.\n");
-
     free(matches);
     free(cars);
 }
@@ -338,18 +334,12 @@ void deleteCarInteractive(const char *filename) {
         printf("❎ Cancelled delete operation.\n");
         return;
     }
-
     char keyword_lower[MAX_MODEL];
     strncpy(keyword_lower, keyword, MAX_MODEL);
     str_to_lower(keyword_lower);
-
     Car *cars = NULL;
     int n = loadAllCars(filename, &cars);
-    if (n < 0) {
-        perror("File error");
-        return;
-    }
-
+    if (n < 0) { perror("File error"); return; }
     int *matches = malloc(sizeof(int) * n);
     int mcount = 0;
     for (int i = 0; i < n; ++i) {
@@ -408,29 +398,26 @@ void deleteCarInteractive(const char *filename) {
 
     char deletedModel[MAX_MODEL];
     strcpy(deletedModel, cars[chosenIdx].model);
-
     for (int i = chosenIdx; i < n - 1; ++i)
         cars[i] = cars[i + 1];
-
     saveAllCars(filename, cars, n - 1);
     printf("✅ Car deleted: %s\n", deletedModel);
-
     free(cars);
     free(matches);
 }
 
 int isCarDataValid(const Car* car) {
     if (car->year < 1886 || car->year > 2025) {
-        return 0; // Invalid year
+        return 0;
     }
     if (car->price < 0) {
-        return 0; // Invalid price
+        return 0;
     }
     if (strlen(car->model) == 0) {
-        return 0; // Model cannot be empty
+        return 0;
     }
     if (strcasecmp(car->availability, "Yes") != 0 && strcasecmp(car->availability, "No") != 0) {
-        return 0; // Invalid availability
+        return 0;
     }
-    return 1; // All checks passed, data is valid
+    return 1;
 }
