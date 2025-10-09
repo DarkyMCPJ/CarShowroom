@@ -17,6 +17,7 @@ void displayCars(const char *filename);
 void searchCarInteractive(const char *filename);
 void updateCarInteractive(const char *filename);
 void deleteCarInteractive(const char *filename);
+int isCarDataValid(const Car* car);
 
 void runUnitTests(void);
 void runE2ETests(void);
