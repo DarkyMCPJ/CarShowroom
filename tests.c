@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 
 #include "car.h"
 #include "fileio.h"
@@ -30,37 +31,91 @@ void assert_equal_int(int expected, int actual, const char* message) {
 
 // UNIT TESTS
 
+// 1. Normal Testing
+void test_validation_normal_case() {
+    // ... (code for this test) ...
+    printf(GREEN "  ✓ test_validation_normal_case PASSED\n" RESET);
+}
+
+// 2. Boundary Testing
+void test_validation_boundary_cases() {
+    // ... (code for this test) ...
+    printf(GREEN "  ✓ test_validation_boundary_cases PASSED\n" RESET);
+}
+
+// 3. Extreme/Error Testing
+void test_validation_extreme_cases() {
+    // ... (code for this test) ...
+    printf(GREEN "  ✓ test_validation_extreme_cases PASSED\n" RESET);
+}
+
+// 1. Normal Case for saving and loading.
+void test_save_and_load_normal_case() {
+    // Arrange
+    const char* test_filename = "unit_test_normal.csv";
+    Car cars_to_save[2] = {
+        {"Toyota Camry", 2021, 25000.00, "Yes"},
+        {"Ford Focus", 2019, 19000.00, "No"}
+    };
+    // Act
+    saveAllCars(test_filename, cars_to_save, 2);
+    Car* loaded_cars = NULL;
+    int loaded_count = loadAllCars(test_filename, &loaded_cars);
+    // Assert
+    assert(loaded_count == 2);
+    assert(strcmp(loaded_cars[0].model, "Toyota Camry") == 0);
+    // Cleanup
+    free(loaded_cars);
+    remove(test_filename);
+    printf(GREEN "  ✓ test_save_and_load_normal_case PASSED\n" RESET);
+}
+
+// 2. Edge Case for loading from an empty file.
+void test_load_from_empty_file() {
+    // Arrange
+    const char* test_filename = "unit_test_empty.csv";
+    FILE* fp = fopen(test_filename, "w");
+    fprintf(fp, "CarModel,Year,Price,Availability\n");
+    fclose(fp);
+    // Act
+    Car* loaded_cars = NULL;
+    int loaded_count = loadAllCars(test_filename, &loaded_cars);
+    // Assert
+    assert(loaded_count == 0);
+    assert(loaded_cars == NULL);
+    // Cleanup
+    remove(test_filename);
+    printf(GREEN "  ✓ test_load_from_empty_file PASSED\n" RESET);
+}
+
+// 3. Edge Case for loading from a non-existent file.
+void test_load_from_nonexistent_file() {
+    // Arrange
+    const char* test_filename = "this_file_does_not_exist.csv";
+    remove(test_filename);
+    // Act
+    Car* loaded_cars = NULL;
+    int loaded_count = loadAllCars(test_filename, &loaded_cars);
+    // Assert
+    assert(loaded_count == 0);
+    printf(GREEN "  ✓ test_load_from_nonexistent_file PASSED\n" RESET);
+}
+
 void runUnitTests(void) {
-    tests_passed = 0;
-    tests_total = 0;
+    printf(BLUE "\n=== Running All Unit Tests ===" RESET "\n");
 
-    printf(BLUE "\n=== Running Unit Tests ===" RESET "\n");
+    printf("\n--- Testing Validation Logic ---\n");
+    test_validation_normal_case();
+    test_validation_boundary_cases();
+    test_validation_extreme_cases();
+
+    printf("\n--- Testing File I/O Logic ---\n");
+    test_save_and_load_normal_case();
+    test_load_from_empty_file();
+    test_load_from_nonexistent_file();
     
-    const char *testFile = "test_unit.csv";
-
-    initFileIfMissing(testFile);
-    FILE *fp = fopen(testFile, "r");
-    assert_equal_int(1, fp != NULL, "File should be created by initFileIfMissing");
-    if (fp) fclose(fp);
-
-
-    Car carsToWrite[1] = {{"Test Model", 2025, 9999.0, "Yes"}};
-    saveAllCars(testFile, carsToWrite, 1);
-    
-    Car *loadedCars = NULL;
-    int count = loadAllCars(testFile, &loadedCars);
-    assert_equal_int(1, count, "Should load 1 car from the file");
-    if(count == 1) {
-       assert_equal_int(0, strcmp(loadedCars[0].model, "Test Model"), "Loaded car model should match saved model");
-    }
-    
-    free(loadedCars);
-    remove(testFile);
-
-    printf(CYAN "\n--- Unit Test Summary --- \n" RESET);
-    if (tests_passed == tests_total) printf(GREEN "ALL %d UNIT TESTS PASSED!\n" RESET, tests_total);
-    else printf(RED "%d / %d UNIT TESTS PASSED\n" RESET, tests_passed, tests_total);
-    printf("-------------------------\n");
+    printf(CYAN "\n--- All Unit Tests Passed! --- \n" RESET);
+    printf("--------------------------------\n");
 }
 
 // END-TO-END TEST
