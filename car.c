@@ -127,11 +127,18 @@ void addCarInteractive(const char *filename) {
 
 void displayCars(const char *filename) {
     FILE *fp = fopen(filename, "r");
-    if (!fp) { perror("File open failed"); return; }
+    if (!fp) {
+        perror("File open failed");
+        return;
+    }
+
     char line[MAX_LINE];
     int first = 1;
-    printf("\n%-20s %-6s %-10s %-12s\n", "Car Model", "Year", "Price", "Availability");
-    printf("---------------------------------------------------------------\n");
+
+    // Increased width for "Price" from 10 to 13
+    printf("\n%-20s %-6s %-13s %-12s\n", "Car Model", "Year", "Price", "Availability");
+    printf("-----------------------------------------------------------------\n");
+
     while (fgets(line, sizeof(line), fp)) {
         if (first) {
             first = 0;
@@ -139,10 +146,14 @@ void displayCars(const char *filename) {
         }
         Car c;
         sscanf(line, "%[^,],%d,%f,%[^\n]", c.model, &c.year, &c.price, c.availability);
-        printf("%-20s %-6d %-10.2f %-12s\n", c.model, c.year, c.price, c.availability);
+        
+        // Increased width for the price data from 10 to 13
+        printf("%-20s %-6d %-13.2f %-12s\n",
+               c.model, c.year, c.price, c.availability);
     }
     fclose(fp);
 }
+
 
 void searchCarInteractive(const char *filename) {
     char keyword[MAX_MODEL];
