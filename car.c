@@ -136,8 +136,8 @@ void displayCars(const char *filename) {
     int first = 1;
 
 
-    printf("\n%-20s %-6s %-13s %-12s\n", "Car Model", "Year", "Price", "Availability");
-    printf("-----------------------------------------------------------------\n");
+    printf("\n%-30s %-6s %-15s %-12s\n", "Car Model", "Year", "Price", "Availability");
+    printf("----------------------------------------------------------------------\n");
 
     while (fgets(line, sizeof(line), fp)) {
         if (first) {
@@ -148,7 +148,7 @@ void displayCars(const char *filename) {
         sscanf(line, "%[^,],%d,%f,%[^\n]", c.model, &c.year, &c.price, c.availability);
         
 
-        printf("%-20s %-6d %-13.2f %-12s\n",
+        printf("%-30s %-6d %-15.2f %-12s\n",
                c.model, c.year, c.price, c.availability);
     }
     fclose(fp);
@@ -189,16 +189,16 @@ void searchCarInteractive(const char *filename) {
         printf("No cars found for '%s'.\n", keyword);
     } else {
 
-        printf("\n%-25s %-6s %-13s %-12s\n", "Car Model", "Year", "Price", "Availability");
-        printf("---------------------------------------------------------------------\n");
+        printf("\n%-30s %-6s %-15s %-12s\n", "Car Model", "Year", "Price", "Availability");
+        printf("-------------------------------------------------------------------------\n");
 
         for (int i = 0; i < mModel; ++i)
 
-            printf("%-25s %-6d %-13.2f %-12s\n", modelMatches[i].model, modelMatches[i].year, modelMatches[i].price, modelMatches[i].availability);
+            printf("%-30s %-6d %-15.2f %-12s\n", modelMatches[i].model, modelMatches[i].year, modelMatches[i].price, modelMatches[i].availability);
 
         for (int i = 0; i < mYear; ++i)
 
-            printf("%-25s %-6d %-13.2f %-12s\n", yearMatches[i].model, yearMatches[i].year, yearMatches[i].price, yearMatches[i].availability);
+            printf("%-30s %-6d %-15.2f %-12s\n", yearMatches[i].model, yearMatches[i].year, yearMatches[i].price, yearMatches[i].availability);
     }
     free(cars);
     free(modelMatches);
