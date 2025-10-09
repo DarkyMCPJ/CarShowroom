@@ -1,0 +1,23 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c11 -O2
+SRC = src
+BIN = bin
+TESTS = tests
+
+SOURCES = $(SRC)/main.c $(SRC)/car.c $(SRC)/fileio.c
+
+all: $(BIN) $(BIN)/carshowroom
+
+$(BIN):
+	mkdir -p $(BIN)
+
+$(BIN)/carshowroom: $(SOURCES)
+	$(CC) $(CFLAGS) -I$(SRC) $(SOURCES) -o $(BIN)/carshowroom
+
+test: $(BIN)
+	$(CC) $(CFLAGS) -I$(SRC) $(TESTS)/unit_tests.c $(SRC)/car.c $(SRC)/fileio.c -o $(BIN)/unit_tests
+	$(CC) $(CFLAGS) -I$(SRC) $(TESTS)/e2e_tests.c $(SRC)/car.c $(SRC)/fileio.c -o $(BIN)/e2e_tests
+	@echo "Built tests: ./bin/unit_tests and ./bin/e2e_tests"
+
+clean:
+	rm -rf $(BIN)/*.o $(BIN)/carshowroom $(BIN)/unit_tests $(BIN)/e2e_tests
