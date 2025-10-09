@@ -1,0 +1,26 @@
+CarModel,Year,Price,Availability
+Honda Civic,2018,18500,Yes
+Honda Civic,2019,20000,Yes
+Honda Civic,2020,21500,No
+Honda Civic,2021,22500,Yes
+Honda Civic,2022,24000,No
+Toyota Camry,2020,24000,Yes
+Mazda 3,2020,23000,No
+Ford Focus,2020,21000,Yes
+Nissan Altima,2020,22000,Yes
+Hyundai Elantra,2020,20000,Yes
+Chevrolet Malibu,2019,21000,No
+BMW 320i,2021,35000,Yes
+Mercedes C200,2021,42000,Yes
+Audi A4,2018,37000,No
+Kia Cerato,2019,19000,Yes
+Subaru Impreza,2020,24000,Yes
+Volkswagen Golf,2021,26000,No
+Tesla Model 3,2022,48000,Yes
+Lexus IS300,2018,41000,No
+Honda Accord,2020,27000,Yes
+Toyota Corolla,2021,23000,Yes
+Ford Mustang,2022,55000,No
+Chevrolet Cruze,2017,16000,Yes
+BMW X5,2021,60000,Yes
+Jeep Wrangler,2021,45000,No
