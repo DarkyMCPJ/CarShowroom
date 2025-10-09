@@ -3,6 +3,22 @@
 #include <string.h>
 #include "car.h"
 
+void copyFile(const char *src, const char *dest) {
+    FILE *fs = fopen(src, "r");
+    FILE *fd = fopen(dest, "w");
+    if (!fs || !fd) {
+        perror("File copy failed");
+        if (fs) fclose(fs);
+        if (fd) fclose(fd);
+        return;
+    }
+    char ch;
+    while ((ch = fgetc(fs)) != EOF)
+        fputc(ch, fd);
+    fclose(fs);
+    fclose(fd);
+}
+
 void initFileIfMissing(const char *filename) {
     FILE *fp = fopen(filename, "r");
     if (!fp) {
