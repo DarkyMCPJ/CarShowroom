@@ -418,3 +418,19 @@ void deleteCarInteractive(const char *filename) {
     free(cars);
     free(matches);
 }
+
+int isCarDataValid(const Car* car) {
+    if (car->year < 1886 || car->year > 2025) {
+        return 0; // Invalid year
+    }
+    if (car->price < 0) {
+        return 0; // Invalid price
+    }
+    if (strlen(car->model) == 0) {
+        return 0; // Model cannot be empty
+    }
+    if (strcasecmp(car->availability, "Yes") != 0 && strcasecmp(car->availability, "No") != 0) {
+        return 0; // Invalid availability
+    }
+    return 1; // All checks passed, data is valid
+}
