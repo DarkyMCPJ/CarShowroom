@@ -1,9 +1,9 @@
+#include "memory_tracker.h" 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <assert.h>
-#include "memory_tracker.h" 
 
 #include "car.h"
 #include "fileio.h"
@@ -28,6 +28,26 @@ void assert_equal_int(int expected, int actual, const char* message) {
     }
 }
 
+void assert_equal_string(const char* expected, const char* actual, const char* message) {
+    tests_total++;
+    if (strcmp(expected, actual) == 0) {
+        printf(GREEN "  ✓ PASS: " RESET "%s\n", message);
+        tests_passed++;
+    } else {
+        printf(RED "  ✗ FAIL: " RESET "%s (Expected: \"%s\", Got: \"%s\")\n", message, expected, actual);
+    }
+}
+
+void assert_equal_float(float expected, float actual, const char* message) {
+    tests_total++;
+    // Use a small tolerance for float comparison
+    if (fabs(expected - actual) < 0.001) {
+        printf(GREEN "  ✓ PASS: " RESET "%s\n", message);
+        tests_passed++;
+    } else {
+        printf(RED "  ✗ FAIL: " RESET "%s (Expected: %.2f, Got: %.2f)\n", message, expected, actual);
+    }
+}
 
 
 // UNIT TESTS
@@ -130,49 +150,94 @@ int find_car_by_model_test(Car* cars, int count, const char* model) {
     return -1;
 }
 
-void runE2ETests(void) {
-    tests_passed = 0;
-    tests_total = 0;
-    
-    printf(BLUE "\n=== Running E2E Workflow Test ===" RESET "\n");
-    const char* test_filename = "test_e2e_workflow.csv";
-    remove(test_filename); 
+void test_full_car_management_workflow() {
+    printf(BLUE "\n=== END-TO-END TEST CASE: Complete Car Showroom Workflow ===" RESET "\n");
+    printf("📋 Scenario: Save initial data -> Update -> Delete -> Add -> Verify final data\n\n");
 
+    // ==================== ARRANGE ====================
+    printf(CYAN "🔹 ARRANGE: Preparing the test environment\n" RESET);
+    const char* test_filename = "test_showroom.csv";
+    remove(test_filename); // Ensure a clean start
 
     Car initial_cars[] = {
         {"Toyota Camry", 2021, 25000.00, "Yes"},
         {"Ford Focus", 2019, 19000.00, "No"}
     };
-    saveAllCars(test_filename, initial_cars, 2);
+    int initial_count = 2;
+    printf("  - Test file: %s\n", test_filename);
+    printf("  - Preparing %d initial cars.\n", initial_count);
 
+    // ==================== ACT ====================
+    printf(CYAN "\n🔹 ACT: Executing the full user workflow\n" RESET);
+    
+    printf("  Step 1: Saving initial data...\n");
+    saveAllCars(test_filename, initial_cars, initial_count);
 
+    printf("  Step 2: Loading data to simulate user session...\n");
     Car* cars = NULL;
     int count = loadAllCars(test_filename, &cars);
 
+    printf("  Step 3: Updating 'Toyota Camry' price...\n");
+    int camry_idx = find_car_by_model_test(cars, count, "Toyota Camry");
+    if (camry_idx != -1) cars[camry_idx].price = 26500.00;
+
+    printf("  Step 4: Deleting 'Ford Focus'...\n");
     int focus_idx = find_car_by_model_test(cars, count, "Ford Focus");
     if (focus_idx != -1) {
         for (int i = focus_idx; i < count - 1; i++) cars[i] = cars[i+1];
         count--;
     }
+
+    printf("  Step 5: Adding a new 'Tesla Model 3'...\n");
+    count++;
+    cars = realloc(cars, sizeof(Car) * count);
+    strcpy(cars[count - 1].model, "Tesla Model 3");
+    cars[count - 1].year = 2023;
+    cars[count - 1].price = 48000.00;
+    strcpy(cars[count - 1].availability, "Yes");
+
+    printf("  Step 6: Saving final data to file...\n");
     saveAllCars(test_filename, cars, count);
     free(cars);
-    
-   
+
+    printf("  Step 7: Loading final data for verification...\n");
     Car* final_cars = NULL;
     int final_count = loadAllCars(test_filename, &final_cars);
-    
-    assert_equal_int(1, final_count, "Final car count should be 1 after deletion");
+
+    // ==================== ASSERT ====================
+    printf(CYAN "\n🔹 ASSERT: Verifying the final state of the file\n" RESET);
+
+    assert_equal_int(2, final_count, "Final car count should be 2");
+
+    int final_camry_idx = find_car_by_model_test(final_cars, final_count, "Toyota Camry");
     int final_focus_idx = find_car_by_model_test(final_cars, final_count, "Ford Focus");
-    assert_equal_int(-1, final_focus_idx, "Ford Focus should be deleted");
-    
+    int final_tesla_idx = find_car_by_model_test(final_cars, final_count, "Tesla Model 3");
+
+    printf("\n  -- Verifying UPDATED car --\n");
+    assert_equal_float(26500.00, final_cars[final_camry_idx].price, "Toyota Camry's price should be updated");
+
+    printf("\n  -- Verifying DELETED car --\n");
+    assert_equal_int(-1, final_focus_idx, "Ford Focus should no longer exist");
+
+    printf("\n  -- Verifying NEWLY ADDED car --\n");
+    assert_equal_string("Tesla Model 3", final_cars[final_tesla_idx].model, "Tesla Model 3's model should be correct");
+    assert_equal_int(2023, final_cars[final_tesla_idx].year, "Tesla Model 3's year should be correct");
+
+    // --- Cleanup ---
     free(final_cars);
     remove(test_filename);
+    
+    printf(GREEN "\n✅ END-TO-END TEST CASE: COMPLETED\n" RESET);
+}
+
+void runE2ETests(void) {
+    tests_passed = 0;
+    tests_total = 0;
+    test_full_car_management_workflow(); // Run the main E2E test case
 
     printf(CYAN "\n--- E2E Test Summary --- \n" RESET);
-    if (tests_passed == tests_total) printf(GREEN "ALL %d E2E TESTS PASSED!\n" RESET, tests_total);
-    else printf(RED "%d / %d E2E TESTS PASSED\n" RESET, tests_passed, tests_total);
+    if (tests_passed == tests_total) printf(GREEN "ALL %d E2E CHECKS PASSED!\n" RESET, tests_total);
+    else printf(RED "%d / %d E2E CHECKS PASSED\n" RESET, tests_passed, tests_total);
     printf("------------------------\n");
-
-    report_memory_leaks();
 }
 
