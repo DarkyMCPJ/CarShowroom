@@ -15,13 +15,22 @@
 #define BLUE  "\033[34m"
 #define CYAN  "\033[36m"
 
+// Forward declarations to fix implicit declaration errors inside this file
+void test_validation_normal_case();
+void test_validation_boundary_cases();
+void test_validation_extreme_cases();
+void test_save_and_load_normal_case();
+void test_load_from_empty_file();
+void test_load_from_nonexistent_file();
+
+// Globals & Helpers for E2E Test Assertions
 static int tests_passed;
 static int tests_total;
 
 void assert_equal_int(int expected, int actual, const char* message) {
     tests_total++;
     if (expected == actual) {
-        printf(GREEN "  ✓ PASS: " RESET "%s (Expected: %d, Got: %d)\n", message, expected, actual);
+        printf(GREEN "  ✓ PASS: " RESET "%s\n", message);
         tests_passed++;
     } else {
         printf(RED "  ✗ FAIL: " RESET "%s (Expected: %d, Got: %d)\n", message, expected, actual);
@@ -40,7 +49,6 @@ void assert_equal_string(const char* expected, const char* actual, const char* m
 
 void assert_equal_float(float expected, float actual, const char* message) {
     tests_total++;
-    // Use a small tolerance for float comparison
     if (fabs(expected - actual) < 0.001) {
         printf(GREEN "  ✓ PASS: " RESET "%s\n", message);
         tests_passed++;
@@ -50,27 +58,107 @@ void assert_equal_float(float expected, float actual, const char* message) {
 }
 
 
-// UNIT TESTS
+// Manual Interactive Unit Test 
 
-// 1. Normal Testing
+void runTestArena() {
+    const char* source_file = "testdata.csv";
+    const char* arena_file = "test_arena.csv";
+    copyFile(source_file, arena_file);
+
+    printf(CYAN "\n============================================\n" RESET);
+    printf(CYAN "      Welcome to the Test Arena! 🏟️\n" RESET);
+    printf("A temporary copy of the data has been created.\n");
+    printf("You can now Add, Search, Update, or Delete freely.\n");
+    printf("All changes will be discarded when you exit.\n");
+    printf(CYAN "============================================\n" RESET);
+
+    int choice;
+    for (;;) {
+        printf("\n--- Test Arena Menu ---\n");
+        printf("1. Add Car\n");
+        printf("2. Display Cars\n");
+        printf("3. Search Car\n");
+        printf("4. Update Car\n");
+        printf("5. Delete Car\n");
+        printf("0. Exit Test Arena\n");
+        printf("-----------------------\n");
+        printf("Your choice: ");
+
+        char buf[16];
+        if (!fgets(buf, sizeof(buf), stdin)) break;
+        choice = atoi(buf);
+
+        switch (choice) {
+            case 1: addCarInteractive(arena_file); break;
+            case 2: displayCars(arena_file); break;
+            case 3: searchCarInteractive(arena_file); break;
+            case 4: updateCarInteractive(arena_file); break;
+            case 5: deleteCarInteractive(arena_file); break;
+            case 0:
+                remove(arena_file);
+                printf(CYAN "\nExiting Test Arena. All temporary changes have been deleted.\n" RESET);
+                return;
+            default:
+                printf(RED "\nInvalid choice. Please try again.\n" RESET);
+        }
+        printf("\nPress Enter to continue...");
+        getchar();
+    }
+}
+
+
+// Automated Unit Test Cases
+
+// 1. Normal Testing: Test with perfectly valid data.
 void test_validation_normal_case() {
-    // ... (code for this test) ...
+    // Arrange: Create a car with standard, valid data.
+    Car valid_car = {"Toyota Camry", 2022, 25000.00, "Yes"};
+
+    // Act: Check if the data is valid.
+    int result = isCarDataValid(&valid_car);
+
+    // Assert: The result should be 1 (true).
+    assert(result == 1);
+    
     printf(GREEN "  ✓ test_validation_normal_case PASSED\n" RESET);
 }
 
-// 2. Boundary Testing
+
+// 2. Boundary Testing: Test the edges of the valid year range.
 void test_validation_boundary_cases() {
-    // ... (code for this test) ...
+    // Arrange: Create cars with data at the very edge of the rules.
+    Car car_lower_bound = {"Oldsmobile", 1886, 500.00, "No"};  // Earliest valid year
+    Car car_upper_bound = {"Future Car", 2025, 90000.00, "Yes"}; // Latest valid year
+    Car car_lower_invalid = {"Too Old", 1885, 500.00, "No"};     // Just below valid year
+    Car car_upper_invalid = {"Too New", 2026, 90000.00, "Yes"};    // Just above valid year
+    Car car_price_zero = {"Free Car", 2000, 0.00, "Yes"};      // Price of zero is valid
+
+    // Act & Assert: Check each case.
+    assert(isCarDataValid(&car_lower_bound) == 1);   // Should be valid
+    assert(isCarDataValid(&car_upper_bound) == 1);   // Should be valid
+    assert(isCarDataValid(&car_lower_invalid) == 0); // Should be invalid
+    assert(isCarDataValid(&car_upper_invalid) == 0); // Should be invalid
+    assert(isCarDataValid(&car_price_zero) == 1);    // Should be valid
+    
     printf(GREEN "  ✓ test_validation_boundary_cases PASSED\n" RESET);
 }
 
-// 3. Extreme/Error Testing
+
+// 3. Extreme/Error Testing: Test with unexpected or error-inducing data.
 void test_validation_extreme_cases() {
-    // ... (code for this test) ...
+    // Arrange: Create cars with clearly invalid data.
+    Car car_negative_price = {"Charity Car", 2020, -100.00, "Yes"};
+    Car car_empty_model = {"", 2021, 20000.00, "Yes"};
+    Car car_bad_avail = {"Toyota Camry", 2022, 25000.00, "Maybe"};
+
+    // Act & Assert: Check each case.
+    assert(isCarDataValid(&car_negative_price) == 0); // Should be invalid
+    assert(isCarDataValid(&car_empty_model) == 0);    // Should be invalid
+    assert(isCarDataValid(&car_bad_avail) == 0);       // Should be invalid
+    
     printf(GREEN "  ✓ test_validation_extreme_cases PASSED\n" RESET);
 }
 
-// 1. Normal Case for saving and loading.
 void test_save_and_load_normal_case() {
     // Arrange
     const char* test_filename = "unit_test_normal.csv";
@@ -91,7 +179,6 @@ void test_save_and_load_normal_case() {
     printf(GREEN "  ✓ test_save_and_load_normal_case PASSED\n" RESET);
 }
 
-// 2. Edge Case for loading from an empty file.
 void test_load_from_empty_file() {
     // Arrange
     const char* test_filename = "unit_test_empty.csv";
@@ -109,7 +196,6 @@ void test_load_from_empty_file() {
     printf(GREEN "  ✓ test_load_from_empty_file PASSED\n" RESET);
 }
 
-// 3. Edge Case for loading from a non-existent file.
 void test_load_from_nonexistent_file() {
     // Arrange
     const char* test_filename = "this_file_does_not_exist.csv";
@@ -123,23 +209,19 @@ void test_load_from_nonexistent_file() {
 }
 
 void runUnitTests(void) {
-    printf(BLUE "\n=== Running All Unit Tests ===" RESET "\n");
-
+    printf(BLUE "\n=== Running All Automated Unit Tests ===" RESET "\n");
     printf("\n--- Testing Validation Logic ---\n");
     test_validation_normal_case();
     test_validation_boundary_cases();
     test_validation_extreme_cases();
-
     printf("\n--- Testing File I/O Logic ---\n");
     test_save_and_load_normal_case();
     test_load_from_empty_file();
     test_load_from_nonexistent_file();
-    
-    printf(CYAN "\n--- All Unit Tests Passed! --- \n" RESET);
-    printf("--------------------------------\n");
-
-    report_memory_leaks();
+    printf(CYAN "\n--- All Automated Unit Tests Passed! --- \n" RESET);
+    printf("----------------------------------------\n");
 }
+
 
 // END-TO-END TEST
 
